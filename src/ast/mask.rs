@@ -1,3 +1,5 @@
+use super::*;
+
 pub struct Mask(Vec<bool>);
 
 impl Mask {
@@ -15,4 +17,30 @@ impl Mask {
             })
             .collect()
     }
+}
+
+fn parse_bool<'a>(i: &'a str) -> IResult<&'a str, bool, VerboseError<&'a str>> {
+    let (i, t) = one_of("01")(i)?;
+
+    Ok((
+        i,
+        match t {
+            '1' => true,
+            '0' => false,
+            _ => unreachable!(),
+        },
+    ))
+}
+
+fn parse_mask<'a>(i: &'a str) -> IResult<&'a str, Mask, VerboseError<&'a str>> {
+    let mut v = i;
+    let res_vec: Result<Vec<bool>, _> = std::iter::from_fn(move || match parse_bool(v) {
+        Ok((i, o)) => {
+            v = i;
+            Some(Ok(o))
+        }
+        Err(e) => return Some(Err(e)),
+    })
+    .collect();
+    Ok(("", Mask(res_vec?)))
 }
